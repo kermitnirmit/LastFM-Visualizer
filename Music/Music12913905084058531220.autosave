@@ -1,0 +1,176 @@
+int DAY_LEN;
+int ARTIST_COUNT;
+String[] textFile;
+Artist[] artists;
+int TOP_VISIBLE = 8;
+float[] maxes;
+int[] unitChoices;
+
+String[] monthNames = {"JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"};
+
+float X_MIN = 100;
+float X_MAX = 1900;
+float Y_MIN = 300;
+float Y_MAX = 1000;
+float X_W = X_MAX-X_MIN;
+float Y_H = Y_MAX-Y_MIN;
+float BAR_PROPORTION = 0.9;
+float BAR_HEIGHT;
+//int START_DATE = dateToDays("2015-10-12");
+
+PFont font;
+float TEXT_MARGIN = 8;
+
+float currentDay;
+float framesPerDay = 10;
+float currentScale = -1;
+int frames = 0;
+
+void setup() {
+    font = loadFont("SQCaviar-Regular-48.vlw");
+    textFile = loadStrings("parsed.csv");
+    String[] parts = textFile[0].split(",");
+    DAY_LEN = textFile.length-1;
+    ARTIST_COUNT = parts.length-1;
+    
+    maxes = new float[DAY_LEN];
+    unitChoices = new int[DAY_LEN];
+    for (int d = 0; d < DAY_LEN; d++) {
+        maxes[d] = 0;
+    }
+    
+    artists = new Artist[ARTIST_COUNT];
+    for (int i = 0; i < ARTIST_COUNT; i++) {
+        artists[i] = new Artist(parts[i+1]);
+    }
+    for(int d = 0; d < DAY_LEN; d++){
+        String[] dataParts = textFile[d+1].split(",");
+        for(int p = 0; p < ARTIST_COUNT; p++){
+            float val = Float.parseFloat(dataParts[p+1]);
+            artists[p].values[d] = val;
+            if(val > maxes[d]) {
+                maxes[d] = val;
+            }
+        }
+    }
+    getRankings();
+    BAR_HEIGHT = (rankToY(1)-rankToY(0))*BAR_PROPORTION;
+    size(1920, 1080);
+}
+
+void getRankings() {
+  for(int d = 0; d < DAY_LEN; d++){
+    boolean[] taken = new boolean[ARTIST_COUNT];
+    for(int p = 0; p < ARTIST_COUNT; p++){
+      taken[p] = false;
+    }
+    for(int spot = 0; spot < TOP_VISIBLE; spot++){
+      float record = -1;
+      int holder = -1;
+      for(int p = 0; p < ARTIST_COUNT; p++){
+        if(!taken[p]){
+          float val = artists[p].values[d];
+          if(val > record){
+            record = val;
+            holder = p;
+          }
+        }
+      }
+      artists[holder].ranks[d] = spot;
+      taken[holder] = true;
+      //println(artists[holder].name);
+    }
+  }
+}
+
+float linIndex(float[] a, float index){
+  int indexInt = (int)index;
+  float indexRem = index%1.0;
+  float beforeVal = a[indexInt];
+  float afterVal = a[min(DAY_LEN-1,indexInt+1)];
+  return lerp(beforeVal,afterVal,indexRem);
+}
+
+float WAIndex(float[] a, float index, float WINDOW_WIDTH){
+  int startIndex = max(0,ceil(index-WINDOW_WIDTH));
+  int endIndex = min(DAY_LEN-1,floor(index+WINDOW_WIDTH));
+  float counter = 0;
+  float summer = 0;
+  for(int d = startIndex; d <= endIndex; d++){
+    float val = a[d];
+    float weight = 0.5+0.5*cos((d-index)/WINDOW_WIDTH*PI);
+    counter += weight;
+    summer += val*weight;
+  }
+  float finalResult = summer/counter;
+  return finalResult;
+}
+float WAIndex(int[] a, float index, float WINDOW_WIDTH){
+  float[] aFloat = new float[a.length];
+  for(int i = 0; i < a.length; i++){
+    aFloat[i] = a[i];
+  }
+  return WAIndex(aFloat,index,WINDOW_WIDTH);
+}
+
+float getXScale(float d){
+  return WAIndex(maxes,d,14)*1.2;
+}
+
+float valueToX(float val){
+  return X_MIN+X_W*val/currentScale;
+}
+
+float rankToY(float rank) {
+    return Y_MIN + rank * (Y_H / TOP_VISIBLE);
+}
+
+void draw() {
+    currentDay = frames / framesPerDay;
+    currentScale = getXScale(currentDay);
+    drawBackground();
+    drawBars();
+    frames++;
+}
+
+void drawBackground() {
+    background(0);
+}
+
+void drawBars() {
+    for (int p = 0; p < ARTIST_COUNT; ++p) {
+        float val = linIndex(artists[p].values, currentDay);
+        float x = valueToX(val);
+        float y = rankToY(WAIndex(artists[p].ranks, currentDay, 7));
+        fill(artists[p].c);
+        rect(X_MIN, y, x-X_MIN, BAR_HEIGHT);
+        fill(255);
+        textFont(font, 14);
+        textAlign(RIGHT);
+        text(artists[p].name, x-6, y + BAR_HEIGHT - 6);
+    }
+}
+
+
+// String daysToDate(float daysF, boolean longForm){
+//   int days = (int)daysF+START_DATE+1;
+//   Date d1 = new Date();
+//   d1.setTime(days*86400000l);
+//   int year = d1.getYear()+1900;
+//   int month = d1.getMonth()+1;
+//   int date = d1.getDate();
+//   if(longForm){
+//     return year+" "+monthNames[month-1]+" "+date;
+//   }else{
+//     return year+"-"+nf(month,2,0)+"-"+nf(date,2,0);
+//   }
+// }
+
+// int dateToDays(String s) {
+//   int year = Integer.parseInt(s.substring(0,4))-1900;
+//   int month = Integer.parseInt(s.substring(5,7))-1;
+//   int date = Integer.parseInt(s.substring(8,10));
+//   Date d1 = new Date(year, month, date, 6, 6, 6);
+//   int days = (int)(d1.getTime()/86400000L);
+//   return days;
+// }

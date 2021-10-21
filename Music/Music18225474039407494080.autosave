@@ -1,0 +1,25 @@
+int DAY_LEN;
+int ARTIST_COUNT;
+String[] textFile;
+Artist[] artists;
+void setup() {
+    textFile = loadStrings("parsed.csv");
+    DAY_LEN = textFile.length - 1;
+    String[] parsedArtists = textFile[0].split(",");
+    ARTIST_COUNT = parsedArtists.length - 1;
+    artists = new Artist[ARTIST_COUNT];
+    for (int i = 0; i < ARTIST_COUNT; ++i) {
+        artists[i] = new Artist(parsedArtists[i+1]);
+    }
+   
+    for (int i = 0; i < DAY_LEN; ++i) { // rows
+        String[] data = textFile[i + 1].split(",");
+        for (int person = 0; person < ARTIST_COUNT; ++person) { //cols
+            artists[person].values[i] = Float.parseFloat(data[person + 1]);
+        }
+    }
+    println(artists[4].values[3]);
+}
+void draw() {
+
+}

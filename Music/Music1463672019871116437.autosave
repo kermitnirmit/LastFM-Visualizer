@@ -1,0 +1,8 @@
+final int DAY_LEN = 2200;
+String[] textFile;
+void setup() {
+    textFile = loadStrings("parsed.csv");
+}
+void draw() {
+
+}

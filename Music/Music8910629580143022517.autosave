@@ -1,0 +1,67 @@
+int DAY_LEN;
+int ARTIST_COUNT;
+String[] textFile;
+Artist[] artists;
+int TOP_VISIBLE = 10;
+float[] maxes;
+int[] unitChoices;
+void setup() {
+    textFile = loadStrings("parsed.csv");
+    String[] parts = textFile[0].split(",");
+    DAY_LEN = textFile.length-1;
+    ARTIST_COUNT = parts.length-1;
+    
+    maxes = new float[DAY_LEN];
+    unitChoices = new int[DAY_LEN];
+    for (int d = 0; d < DAY_LEN; d++) {
+        maxes[d] = 0;
+    }
+    
+    artists = new Artist[ARTIST_COUNT];
+    for (int i = 0; i < ARTIST_COUNT; i++) {
+        artists[i] = new Artist(parts[i+1]);
+    }
+    for(int d = 0; d < DAY_LEN; d++){
+        String[] dataParts = textFile[d+1].split(",");
+        for(int p = 0; p < ARTIST_COUNT; p++){
+            float val = Float.parseFloat(dataParts[p+1]);
+            artists[p].values[d] = val;
+            if(val > maxes[d]) {
+                maxes[d] = val;
+            }
+        }
+    }
+    getRankings();
+    for (int i = 0; i < DAY_LEN; ++i) {
+        println(artists[0].ranks[i]);
+    }
+}
+
+void getRankings() {
+  for(int d = 0; d < DAY_LEN; d++){
+    boolean[] taken = new boolean[ARTIST_COUNT];
+    for(int p = 0; p < ARTIST_COUNT; p++){
+      taken[p] = false;
+    }
+    for(int spot = 0; spot < TOP_VISIBLE; spot++){
+      float record = -1;
+      int holder = -1;
+      for(int p = 0; p < ARTIST_COUNT; p++){
+        if(!taken[p]){
+          float val = artists[p].values[d];
+          if(val > record){
+            record = val;
+            holder = p;
+          }
+        }
+      }
+      artists[holder].ranks[d] = spot;
+      taken[holder] = true;
+      println(artists[holder].name);
+    }
+  }
+}
+
+void draw() {
+
+}
