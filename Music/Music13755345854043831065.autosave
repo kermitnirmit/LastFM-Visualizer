@@ -1,5 +1,4 @@
 import java.util.*;
-import com.hamoid.*;
 
 int DAY_LEN;
 int ARTIST_COUNT;
@@ -28,11 +27,9 @@ PFont font;
 float TEXT_MARGIN = 8;
 
 float currentDay;
-float framesPerDay = 3.0;
+float framesPerDay = 2.0;
 float currentScale = -1;
 int frames = 0;
-
-VideoExporter videoExport;
 
 void setup() {
     font = loadFont("SQCaviar-Regular-48.vlw");
@@ -63,13 +60,9 @@ void setup() {
         }
     }
     getRankings();
-    getDaysInTopTen();
-    getConsecutiveDays();
     getUnits();
     BAR_HEIGHT = (rankToY(1)-rankToY(0))*BAR_PROPORTION;
     size(1920, 1080);
-    videoExport = new VideoExporter(this, "output.mp4");
-    videoExport.startMovie();
 }
 
 void getRankings() {
@@ -93,42 +86,6 @@ void getRankings() {
       artists[holder].ranks[d] = spot;
       taken[holder] = true;
       //println(artists[holder].name);
-    }
-  }
-}
-
-void getDaysInTopTen() {
-  for (int i = 0; i < ARTIST_COUNT; ++i) {
-    for (int d = 0; d < DAY_LEN; ++d) {
-      if (d == 0) {
-        if (artists[i].ranks[d] < TOP_VISIBLE) {
-          artists[i].daysInTopTen[d] = 1;
-        }
-      } else {
-        if (artists[i].ranks[d] < TOP_VISIBLE) {
-          artists[i].daysInTopTen[d] = artists[i].daysInTopTen[d - 1] + 1; 
-        } else {
-          artists[i].daysInTopTen[d] = artists[i].daysInTopTen[d - 1];
-        }
-      }
-    }
-  }
-}
-
-void getConsecutiveDays() {
-  for (int i = 0; i < ARTIST_COUNT; ++i) {
-    for (int d = 0; d < DAY_LEN; ++d) {
-      if (d == 0) {
-        if (artists[i].ranks[d] < TOP_VISIBLE) {
-          artists[i].consecutiveDays[d] = 1;
-        }
-      } else {
-        if (artists[i].ranks[d] >= TOP_VISIBLE) {
-          artists[i].consecutiveDays[d] = 0;
-        } else {
-          artists[i].consecutiveDays[d] = artists[i].consecutiveDays[d - 1] + 1;
-        }
-      }
     }
   }
 }
@@ -181,10 +138,6 @@ void draw() {
     drawBackground();
     drawHorizTickmarks();
     drawBars();
-    videoExport.saveFrame();
-    if (currentDay == 2199) {
-      videoExport.endMovie();
-    }
     frames++;
 }
 
@@ -206,10 +159,7 @@ void drawBars() {
         fill(255);
         textFont(font, 14);
         textAlign(RIGHT);
-        text(artists[p].name, x-6, y + BAR_HEIGHT - 4);
-        // text("Days in top ten", x-6, y+BAR_HEIGHT - 40);
-        // text(artists[p].daysInTopTen[int(currentDay)], x-6, y+BAR_HEIGHT - 20);
-        text(artists[p].consecutiveDays[int(currentDay)], x-6, y+BAR_HEIGHT - 24);
+        text(artists[p].name, x-6, y + BAR_HEIGHT - 2);
         //text((int)val, x-6, y + BAR_HEIGHT - 20);
     }
 }
